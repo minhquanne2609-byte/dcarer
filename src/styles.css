@@ -755,6 +755,23 @@ body.png-export .dx-print-text {
    scroll-based state means nothing in a static PDF, where only whichever
    step happened to be "active" at capture time ends up highlighted. Full
    PDF only: show every step filled in, as if all steps were "active". */
+/* Journey Overview band in "Export full web": the section uses
+   max-w-[2000px] like every other section, so it widens together with
+   --pdf-content-width instead of staying narrow while --pdf-scale enlarges
+   its text (that mismatch made the step labels overlap). These rules keep
+   the 7 steps on one row and each label inside its own column. */
+body.fullpdf-export .journey-nav ol {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+body.fullpdf-export .journey-nav ol > li {
+  min-width: 0;
+}
+body.fullpdf-export .journey-nav .journey-badge-title {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
 body.fullpdf-export .journey-nav .journey-step-badge {
   border-color: var(--accent) !important;
   background-color: var(--accent) !important;

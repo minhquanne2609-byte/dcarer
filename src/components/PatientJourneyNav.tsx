@@ -139,7 +139,7 @@ export function PatientJourneyNav({
   );
 
   return (
-    <section className="journey-nav max-w-[1800px] mx-auto px-12 pb-24 print:py-2">
+    <section className="journey-nav max-w-[2000px] mx-auto px-12 pb-24 print:py-2">
       <div className="flex items-center justify-center gap-3 py-14 md:py-20 print:hidden">
         <span className="h-px w-16 bg-border" />
         <span className="h-1 w-1 rounded-full bg-accent" />
