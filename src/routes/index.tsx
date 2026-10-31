@@ -146,6 +146,7 @@ import {
 } from "@/lib/plan-rules";
 import { useLiveRates, CURRENCY_CODES } from "@/lib/currency";
 import { SavedPlansBar } from "@/components/SavedPlans";
+import { PlanImportButton, type ImportResult } from "@/components/PlanImportDialog";
 import { PatientJourneyNav } from "@/components/PatientJourneyNav";
 import { SectionHeading } from "@/components/SectionHeading";
 import { PhotoCollage } from "@/components/PhotoCollage";
@@ -4394,6 +4395,41 @@ function PlanPage({ content }: { content: ContentMap }) {
     setOffers(content.patient_benefits.items.map((it, i) => ({ id: `o${i + 1}`, ...it })));
   };
 
+  // Fill the plan from a photo/screenshot (see PlanImportDialog). Rows are plain
+  // rows — prices come from the clinic catalog when the service matches it,
+  // otherwise from the price printed on the image, otherwise 0 (editable).
+  const applyImportedPlan = (res: ImportResult) => {
+    if (res.patientName) {
+      const nm = res.patientName;
+      setPatient((p) => ({ ...p, fullName: nm }));
+      // The page greeting ("Dear …,") is what names the plan/file, so keep it in step.
+      setGreeting(`Dear ${nm},`);
+    }
+    if (res.phases.length === 0) return;
+    const build = (offset: number): Phase[] =>
+      res.phases.map((ph, i) => ({
+        id: uid(),
+        title: ph.title ?? `Phase ${offset + i + 1} — Treatment`,
+        rows: ph.rows.map((r) => {
+          const free = isInPackageService(r.name);
+          return {
+            id: uid(),
+            name: r.name,
+            tooth: r.tooth,
+            qty: r.qty,
+            unitVnd: free
+              ? null
+              : isRemovablePartialDenture(r.name)
+                ? RPD_BASE_VND
+                : (catalogPrice(r.name) ?? r.unitPriceVnd ?? 0),
+            discount: qualifiesForTempDentureDiscount(r.name) ? autoDiscountVnd(r.name, r.qty) : 0,
+          } satisfies Row;
+        }),
+      }));
+    if (res.mode === "replace") setPhases(build(0));
+    else setPhases((p) => [...p, ...build(p.length)]);
+  };
+
   // ----- "Clear cache" — free memory after a long session / many exports -----
   // Repeated image/PDF exports and a deep undo history (each step is a full
   // JSON snapshot of the page, base64 photos included) are what make the tab
@@ -4525,6 +4561,8 @@ function PlanPage({ content }: { content: ContentMap }) {
               </div>
 
               <SavedPlansBar getSnapshot={() => undoSnapshot} restore={restoreSavedPlan} patientName={displayName} />
+
+              <PlanImportButton catalogNames={catalog.items.map((i) => i.name)} onApply={applyImportedPlan} />
 
               {contentManager && (
                 <Link
